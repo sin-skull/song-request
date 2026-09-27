@@ -50,7 +50,8 @@ main{min-width:0; padding:0 16px 110px; max-width:620px; width:100%; margin:0 au
 .iconbtn:active{transform:translateY(2px); box-shadow:0 1px 0 var(--line)}
 .iconbtn svg{width:20px; height:20px}
 
-.tabbar{position:fixed; left:0; right:0; bottom:0; z-index:6; display:flex; justify-content:space-around; align-items:center; background:#fff;
+.tabbar{display:none !important}
+.tabbar-old{position:fixed; left:0; right:0; bottom:0; z-index:6; display:flex; justify-content:space-around; align-items:center; background:#fff;
   padding:8px 10px calc(8px + env(safe-area-inset-bottom)); box-shadow:0 -2px 0 var(--line)}
 @media (min-width:900px){ .tabbar{display:none} }
 .tabbar button{border:none; background:none; display:flex; flex-direction:column; align-items:center; gap:2px; font-size:11px; font-weight:700; color:var(--sub); cursor:pointer; padding:4px 14px}
@@ -161,6 +162,19 @@ textarea.in{min-height:92px; resize:vertical}
 .sec{display:flex; align-items:baseline; justify-content:space-between; margin:6px 2px 10px}
 .sec h2{font-size:16px; margin:0}
 .sec small{color:var(--sub); font-size:12px}
+.seg{display:flex; gap:6px; background:#fff; border-radius:99px; padding:5px; margin:0 0 14px; box-shadow:0 3px 0 var(--line)}
+.seg button{flex:1; border:none; border-radius:99px; background:none; padding:10px 8px; font:inherit; font-weight:800; font-size:14px; color:var(--sub); cursor:pointer; position:relative}
+.seg button.on{background:var(--ink); color:#fff}
+.seg .bdg{display:inline-block; min-width:18px; height:18px; line-height:18px; border-radius:99px; background:var(--red); color:#fff; font-size:11px; margin-left:4px; padding:0 5px}
+.notice{display:flex; gap:12px; align-items:flex-start; background:#fff; border-radius:16px; padding:14px; margin:0 0 10px; box-shadow:0 3px 0 var(--line)}
+.notice .ic{font-size:22px; line-height:1}
+.notice b{display:block; margin-bottom:2px}
+.notice p{margin:0; font-size:13px; color:var(--sub)}
+.notice .row{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap}
+.notice.hot{box-shadow:0 0 0 2px var(--red), 0 3px 0 var(--line)}
+.fab{position:fixed; right:18px; bottom:calc(20px + env(safe-area-inset-bottom)); z-index:6; border:none; border-radius:99px; background:var(--red); color:#fff; font:inherit; font-weight:800; font-size:15px; padding:14px 20px; box-shadow:0 5px 0 var(--red-d); cursor:pointer}
+.fab:active{transform:translateY(4px); box-shadow:0 1px 0 var(--red-d)}
+@media (min-width:900px){ .fab{display:none} }
 .me{display:flex; align-items:center; gap:12px; background:#fff; border-radius:18px; padding:12px; margin:0 0 16px; box-shadow:0 4px 0 var(--line)}
 .me .av{width:48px; height:48px; font-size:18px}
 .me b{display:block} .me small{color:var(--sub); font-size:12px}
@@ -301,6 +315,7 @@ select.in{appearance:auto}
       <div class="field"><label for="liPw">パスワード</label><input class="in" id="liPw" type="password" autocomplete="off"></div>
       <label class="toggle" style="margin:4px 0 12px"><input type="checkbox" id="liRemember" checked><span class="sw"></span>ログインしたままにする</label>
       <button class="btn main wide" id="loginBtn">ログイン</button>
+      <div style="text-align:center;margin-top:8px"><button class="linkbtn" id="forgotBtn" style="font-size:12px">パスワードを忘れた</button></div>
     </div>
     <div style="text-align:center">
       <button class="linkbtn" id="toRegister">はじめての方：新しく登録</button><br>
@@ -352,8 +367,17 @@ select.in{appearance:auto}
         <button class="btn main" data-nav="new" style="background:#fff;color:var(--ink);box-shadow:0 4px 0 #bbb">＋ 依頼する</button>
       </div>
       <div class="me" id="meCard"></div>
-      <div class="sec"><h2>あなたの依頼</h2><small>この端末の記録</small></div>
-      <div id="feed"></div>
+      <div class="seg" id="homeSeg"><button data-tab="home" class="on">ホーム</button><button data-tab="list">依頼一覧</button></div>
+      <div id="tabHome">
+        <div class="sec"><h2>お知らせ</h2></div>
+        <div id="notices"></div>
+        <div class="sec"><h2>最近の依頼</h2><small>この端末の記録</small></div>
+        <div id="feedRecent"></div>
+      </div>
+      <div id="tabList" hidden>
+        <div class="sec"><h2>あなたの依頼</h2><small>この端末の記録</small></div>
+        <div id="feed"></div>
+      </div>
     </section>
 
     <!-- プロフィール -->
@@ -522,6 +546,7 @@ select.in{appearance:auto}
 <input type="file" id="jacketFile" accept="image/*" hidden>
 <input type="file" id="photoFile" accept="image/*" hidden>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
+<button class="fab" id="fab" data-nav="new" hidden>＋ 依頼する</button>
 <canvas id="confetti" hidden></canvas>
 <div class="toast" id="toast"></div>
 
@@ -560,6 +585,15 @@ function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)
 let store = loadStore();
 let me = null;   // ログイン中のアカウント
 
+// 全角・大文字小文字のちがいを気にせずにユーザーIDを探す
+function normId(s){ return String(s||'').normalize('NFKC').trim().toLowerCase(); }
+function findAccountId(input){ const n=normId(input); if(!n) return null; if(store.accounts[input.trim()]) return input.trim(); return Object.keys(store.accounts).find(k=>normId(k)===n)||null; }
+// 日本語入力のまま打った全角パスワードでも通す
+async function pwMatches(pw,u){
+  const tries=[...new Set([pw, pw.normalize('NFKC'), pw.trim(), pw.normalize('NFKC').trim()])];
+  for(const t of tries){ if(await hashPw(t,u.salt)===u.hash) return true; }
+  return false;
+}
 async function hashPw(pw, salt){
   const data = new TextEncoder().encode(salt + ':' + pw);
   if(window.crypto && crypto.subtle){
@@ -691,15 +725,32 @@ function showAuth(mode){
     $('#liId').value=''; $('#liPw').value='';
   }
 }
+$('#forgotBtn').onclick=()=>{
+  const id=findAccountId($('#liId').value) || (Object.keys(store.accounts).length===1 ? Object.keys(store.accounts)[0] : null);
+  if(!id) return showMsg($('#forgotBtn'), '先にユーザーIDを入れるか、上のアイコンからアカウントを選んでください');
+  const u=store.accounts[id];
+  ask({ title:'パスワードを作り直す', text:`「${u.artistName||u.realName||id}」のパスワードを新しくします。本人確認のため、登録した実名かアーティスト名を入れてください。`,
+    extra:'<input class="in" id="fgName" placeholder="実名 または アーティスト名" autocomplete="off" style="margin:8px 0"><input class="in" id="fgPw" type="password" placeholder="新しいパスワード（4文字以上）" autocomplete="new-password">',
+    yes:'作り直す', no:'やめる',
+    onYes: async()=>{
+      const nm=normId($('#fgName')?$('#fgName').value:''), np=($('#fgPw')?$('#fgPw').value:'').normalize('NFKC');
+      if(!nm || (nm!==normId(u.realName) && nm!==normId(u.artistName))) return toast('名前が登録と一致しません');
+      if(np.length<4) return toast('パスワードは4文字以上にしてください');
+      u.salt=makeCode()+makeCode(); u.hash=await hashPw(np,u.salt); saveStore();
+      $('#liId').value=id; $('#liPw').value=''; toast('パスワードを作り直しました。ログインしてください');
+    }});
+};
 $('#toRegister').onclick=()=>{ sfx.next(); showAuth('register'); };
 $('#toLogin').onclick=()=>{ sfx.back(); showAuth('login'); };
 
 $('#loginBtn').onclick = async ()=>{
   ctx();
-  const id=$('#liId').value.trim(), pw=$('#liPw').value;
-  const u = store.accounts[id];
-  if(!u) return showMsg($('#loginBtn'), 'このユーザーIDはこの端末に登録されていません');
-  if(await hashPw(pw,u.salt) !== u.hash) return showMsg($('#loginBtn'), 'パスワードがちがいます');
+  const id=findAccountId($('#liId').value), pw=$('#liPw').value;
+  const u = id && store.accounts[id];
+  if(!u) return showMsg($('#loginBtn'), Object.keys(store.accounts).length
+    ? 'このユーザーIDはこの端末に登録されていません。上のアイコンから選ぶか、別の端末で作った場合は「別の端末のデータを読み込む」を使ってください'
+    : 'この端末にはまだアカウントがありません。別の端末で作った場合は「別の端末のデータを読み込む」から読み込んでください');
+  if(!(await pwMatches(pw,u))) return showMsg($('#loginBtn'), 'パスワードがちがいます。忘れた場合は「パスワードを忘れた」から作り直せます');
   store.last = id; store.remember = $('#liRemember').checked; saveStore();
   enter(id); sfx.next();
 };
@@ -707,9 +758,9 @@ $('#liPw').addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.isComposing
 
 $('#registerBtn').onclick = async ()=>{
   ctx();
-  const id=$('#rgId').value.trim(), pw=$('#rgPw').value;
+  const id=$('#rgId').value.normalize('NFKC').trim(), pw=$('#rgPw').value.normalize('NFKC');
   if(!/^[A-Za-z0-9_.-]{3,20}$/.test(id)) return showMsg($('#registerBtn'), 'ユーザーIDは半角英数字3〜20文字にしてください');
-  if(store.accounts[id]) return showMsg($('#registerBtn'), 'このユーザーIDはこの端末ですでに使われています');
+  if(findAccountId(id)) return showMsg($('#registerBtn'), 'このユーザーIDはこの端末ですでに使われています。ログイン画面からログインしてください');
   if(pw.length<4) return showMsg($('#registerBtn'), 'パスワードは4文字以上にしてください');
   const p = readProfile('rg'); const err = profileError(p);
   if(err) return showMsg($('#registerBtn'), err);
@@ -790,7 +841,7 @@ function go(v, dir=1){
   cur=v;
   const wiz = flow==='new'?WIZ_NEW:flow==='rev'?WIZ_REV:null;
   const inWiz = !!wiz && wiz.includes(v);
-  $('#wiznav').hidden = !inWiz; $('#tabbar').hidden = inWiz;
+  $('#wiznav').hidden = !inWiz; $('#tabbar').hidden = inWiz; $('#fab').hidden = v!=='home';
   $('#dots').hidden = !inWiz;
   if(inWiz){
     const i = wiz.indexOf(v);
@@ -846,12 +897,39 @@ $('#crTags').innerHTML = CREATOR.tags.map(t=>`<span>#${esc(t)}</span>`).join('')
 
 function coverStyle(code){ const h=hue(code); return `background:linear-gradient(135deg,hsl(${h} 70% 58%),hsl(${(h+50)%360} 70% 48%))`; }
 function waveHTML(code){ let s=hue(code)+7; return '<div class="wave">'+Array.from({length:28},()=>{ s=(s*9301+49297)%233280; return `<i style="height:${18+s/233280*70}%"></i>`; }).join('')+'</div>'; }
+let homeTab='home';
+function setHomeTab(t){ homeTab=t; $$('#homeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t)); $('#tabHome').hidden=t!=='home'; $('#tabList').hidden=t!=='list'; sfx.tap(); window.scrollTo({top:0}); }
+document.addEventListener('click', e=>{ const b=e.target.closest('#homeSeg button'); if(b) setHomeTab(b.dataset.tab); });
+function renderNotices(){
+  const h=me.history||[], out=[];
+  h.filter(x=>x.delState==='ask').forEach(x=>out.push(`<div class="notice hot"><div class="ic">🗑</div><div><b>masu から削除の依頼が届いています</b><p>「${esc(x.title||'曲名なし')}」（${esc(x.code)}）を削除してもいいですか？</p><div class="row"><button class="btn small" data-askyes="${esc(x.code)}">削除に同意する</button><button class="btn small" data-askno="${esc(x.code)}">削除しない</button></div></div></div>`));
+  h.filter(x=>x.delState==='waiting').forEach(x=>out.push(`<div class="notice"><div class="ic">⏳</div><div><b>削除の許可を待っています</b><p>「${esc(x.title||'曲名なし')}」（${esc(x.code)}）の削除を masu に頼んでいます。</p></div></div>`));
+  h.filter(x=>x.delState==='rejected').forEach(x=>out.push(`<div class="notice"><div class="ic">💬</div><div><b>削除は見送りになりました</b><p>「${esc(x.title||'曲名なし')}」（${esc(x.code)}）。理由は masu から連絡があります。</p></div></div>`));
+  (me.notes||[]).slice(-5).reverse().forEach(n=>out.push(`<div class="notice"><div class="ic">${n.ic||'🔔'}</div><div><b>${esc(n.t)}</b><p>${esc(n.p||'')}</p></div></div>`));
+  if(!h.length) out.push(`<div class="notice"><div class="ic">👋</div><div><b>ようこそ</b><p>「＋ 依頼する」から曲の依頼ができます。送った依頼は「依頼一覧」にたまっていきます。</p></div></div>`);
+  if(!out.length) out.push(`<div class="notice"><div class="ic">✅</div><div><b>新しいお知らせはありません</b><p>依頼の状況が変わるとここに出ます。</p></div></div>`);
+  $('#notices').innerHTML=out.join('');
+  const n=h.filter(x=>x.delState==='ask').length;
+  $('#homeSeg [data-tab="home"]').innerHTML='ホーム'+(n?`<span class="bdg">${n}</span>`:'');
+  $$('[data-askyes]').forEach(b=>b.onclick=()=>answerAsk(b.dataset.askyes,true));
+  $$('[data-askno]').forEach(b=>b.onclick=()=>answerAsk(b.dataset.askno,false));
+}
+function addNote(t,p,ic){ me.notes=(me.notes||[]).concat([{t,p,ic,at:Date.now()}]).slice(-20); saveStore(); }
+async function answerAsk(code, yes){
+  const h=(me.history||[]).find(x=>x.code===code); if(!h) return;
+  try{
+    await sendDeletion(yes?'削除同意':'削除拒否', code);
+    if(yes){ h.delState='agreed'; toast('同意しました'); } else { delete h.delState; h.delNoAt=Date.now(); toast('削除しないと伝えました'); }
+    saveStore(); renderHome();
+  }catch(e){ toast('送れませんでした'); }
+}
 function renderHome(){
   const h = me.history || [];
   $('#meCard').innerHTML = avatarHTML(me,48) + `<div><b>${esc(me.artistName||me.realName)}</b><small>@${esc(me.loginId)}</small></div>
     <div class="stat"><b>${h.filter(x=>x.kind==='新規').length}</b>依頼</div><div class="stat"><b>${h.filter(x=>x.kind==='修正').length}</b>修正</div>`;
-  if(!h.length){ $('#feed').innerHTML = `<div class="empty">まだ依頼はありません。<br>下の「＋」から最初の依頼をどうぞ。</div>`; return; }
-  $('#feed').innerHTML = h.slice().reverse().map(x=>{
+  renderNotices();
+  if(!h.length){ const em=`<div class="empty">まだ依頼はありません。<br>「＋ 依頼する」から最初の依頼をどうぞ。</div>`; $('#feed').innerHTML=em; $('#feedRecent').innerHTML=em; syncDeletion(); return; }
+  const postHTML = x=>{
     const tags = [...String(x.genre||'').split('・').filter(Boolean), x.usage, x.bpm && (x.bpm==='おまかせ'?'テンポおまかせ':'BPM '+x.bpm), x.totalBars && x.totalBars+'小節'].filter(Boolean);
     const src = x.kind==='新規' ? x : (h.find(y=>y.code===x.origCode)||{});
     const jk = src.jacket || x.jacket;
@@ -864,7 +942,11 @@ function renderHome(){
       ${x.kind==='修正'?`<div class="txt">${esc((x.items||[]).map(s=>'・'+s).join('\n'))}</div>`:''}
       <div class="act">${x.kind==='新規'?`<button class="btn small" data-fix="${esc(x.code)}">🔧 修正を依頼</button>`:`<span class="hint" style="margin:0">元の依頼：${esc(x.origCode)}</span>`}${delBadge(x)}<code>${esc(x.code)}</code></div>
     </article>`;
-  }).join('');
+  };
+  const rev = h.slice().reverse();
+  $('#feed').innerHTML = rev.map(postHTML).join('');
+  $('#feedRecent').innerHTML = rev.slice(0,3).map(postHTML).join('') + (rev.length>3?`<button class="btn sub wide" data-tabgo="list">すべての依頼を見る（${rev.length}件）</button>`:'');
+  $$('[data-tabgo]').forEach(b=>b.onclick=()=>setHomeTab(b.dataset.tabgo));
   $$('[data-fix]').forEach(b=>b.onclick=()=>{ startRev(b.dataset.fix); });
   $$('[data-del]').forEach(b=>b.onclick=()=>askUserDelete(b.dataset.del));
   syncDeletion();
@@ -921,6 +1003,7 @@ async function syncDeletion(force){
   who.history=who.history.filter(h=>{
     const st=items[h.code];
     if(st==='deleted'){ removed.push(h); changed=true; return false; }
+    if(st==='ask' && h.delState!=='ask' && h.delState!=='agreed' && !(h.delNoAt && Date.now()-h.delNoAt<10*60000)){ h.delState='ask'; changed=true; }
     if(st==='waiting' && h.delState!=='waiting'){ h.delState='waiting'; changed=true; }
     if(st==='rejected' && h.delState!=='rejected'){ h.delState='rejected'; changed=true; }
     if(st==='ask' && h.delState!=='agreed' && !(h.delNoAt && Date.now()-h.delNoAt<10*60000)) asks.push(h);
@@ -928,6 +1011,8 @@ async function syncDeletion(force){
     return true;
   });
   if(changed){ saveStore(); if(cur==='home') renderHome(); }
+  removed.forEach(x=>{ me.notes=(me.notes||[]).concat([{t:'依頼が削除されました', p:`「${x.title||'曲名なし'}」（${x.code}）`, ic:'🗑', at:Date.now()}]).slice(-20); });
+  if(removed.length){ saveStore(); if(cur==='home') renderNotices(); }
   if(removed.length) toast(removed.length===1?`「${removed[0].title||removed[0].code}」は削除されました`:`${removed.length}件の依頼が削除されました`);
   if(asks.length && !delAsking) askNext(asks);
 }
