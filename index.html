@@ -1262,7 +1262,17 @@ function renderSummary(){
 }
 async function submit(){
   const btn=$('#nextBtn'); btn.disabled=true; btn.textContent='送信中…';
-  const d=collect(); d.code=makeCode();
+  const d=collect();
+  // 依頼コードはサーバー（コード管理）で発行してもらう：かぶらない・勝手に作れない
+  try{
+    const r=await fetch(DEL_API_URL+'?'+new URLSearchParams({action:'issue', rid:me.requesterId}).toString());
+    const j=await r.json();
+    if(!j.ok || !j.code) throw new Error(j.error||'no_code');
+    d.code=j.code;
+  }catch(ex){
+    showMsg($('#summary'), ex.message==='too_many' ? '短い時間に何度も送ろうとしたため、少し時間をおいてからお試しください。' : '依頼コードを受け取れませんでした。通信状況を確認して、もう一度お試しください。');
+    btn.disabled=false; btn.textContent='この内容で送る'; return;
+  }
   const body=new URLSearchParams();
   Object.entries(ENTRY).forEach(([k,e])=>{ const v=d[k]; if(e && v!==undefined && v!=='' && v!==null) body.append(e,String(v)); });
   try{
