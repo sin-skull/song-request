@@ -179,7 +179,11 @@ textarea.in{min-height:92px; resize:vertical}
 .post .meta{display:flex; flex-wrap:wrap; gap:6px; padding:10px 14px 0}
 .post .meta span{font-size:11px; font-weight:700; background:var(--soft); border-radius:99px; padding:3px 9px; box-shadow:inset 0 0 0 1.5px var(--line)}
 .post .txt{padding:8px 14px 0; font-size:13px; color:var(--sub); white-space:pre-wrap}
-.post .act{display:flex; gap:8px; padding:10px 14px 14px; align-items:center}
+.post .act{display:flex; gap:8px; padding:10px 14px 14px; align-items:center; flex-wrap:wrap}
+.dtag{font-size:12px; font-weight:800; border-radius:99px; padding:4px 10px; background:#eee9e1; color:#5d564e}
+.dtag.warn{background:#fff1ef; color:var(--red-d)}
+.btn.icon{padding:9px 11px}
+.tut textarea{width:100%; min-height:70px; border:2px solid var(--line); border-radius:12px; padding:10px; font:inherit; margin:8px 0 4px; resize:vertical}
 .post .act code{margin-left:auto; font-size:12px; color:var(--sub); font-family:ui-monospace,monospace}
 .empty{text-align:center; color:var(--sub); padding:30px 10px; font-size:14px}
 
@@ -510,6 +514,10 @@ select.in{appearance:auto}
   <div class="ill" id="tutIll"></div><h2 id="tutT"></h2><p id="tutP"></p>
   <div class="pg" id="tutPg"></div>
   <div class="row"><button class="btn sub" id="tutSkip">とばす</button><button class="btn main" id="tutNext">つぎへ</button></div>
+</div></div>
+<div class="tut" id="ask" hidden><div class="box">
+  <h2 id="askT"></h2><p id="askP"></p><div id="askX"></div>
+  <div class="row"><button class="btn sub" id="askNo"></button><button class="btn main" id="askYes"></button></div>
 </div></div>
 <input type="file" id="jacketFile" accept="image/*" hidden>
 <input type="file" id="photoFile" accept="image/*" hidden>
@@ -854,10 +862,82 @@ function renderHome(){
       ${tags.length?`<div class="meta">${tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`:''}
       ${x.credits?`<div class="txt">${esc(x.credits)}</div>`:''}
       ${x.kind==='修正'?`<div class="txt">${esc((x.items||[]).map(s=>'・'+s).join('\n'))}</div>`:''}
-      <div class="act">${x.kind==='新規'?`<button class="btn small" data-fix="${esc(x.code)}">🔧 修正を依頼</button>`:`<span class="hint" style="margin:0">元の依頼：${esc(x.origCode)}</span>`}<code>${esc(x.code)}</code></div>
+      <div class="act">${x.kind==='新規'?`<button class="btn small" data-fix="${esc(x.code)}">🔧 修正を依頼</button>`:`<span class="hint" style="margin:0">元の依頼：${esc(x.origCode)}</span>`}${delBadge(x)}<code>${esc(x.code)}</code></div>
     </article>`;
   }).join('');
   $$('[data-fix]').forEach(b=>b.onclick=()=>{ startRev(b.dataset.fix); });
+  $$('[data-del]').forEach(b=>b.onclick=()=>askUserDelete(b.dataset.del));
+  syncDeletion();
+}
+
+/* =====================================================================
+ * 削除（お互いの同意で削除）
+ *   ・自分から頼む → masu が許可すると削除
+ *   ・masu から頼まれる → ここで同意すると削除
+ *   確認窓口は「削除の状態」しか返さない（名前や内容は返さない）
+ * ===================================================================== */
+const DEL_API_URL = "https://script.google.com/macros/s/AKfycbxTp5AL3NiyX-X9m1_ir3NsxAMFOhcFOz_2nL2_Sav7ZyWafYlXfGRPV_HjVKh5x0qQoQ/exec";
+function delBadge(x){
+  if(x.delState==='waiting') return `<span class="dtag">🗑 削除依頼中</span>`;
+  if(x.delState==='agreed') return `<span class="dtag">🗑 削除の手続き中</span>`;
+  if(x.delState==='rejected') return `<span class="dtag warn">削除は見送りになりました</span><button class="btn small icon" data-del="${esc(x.code)}" title="削除を依頼">🗑</button>`;
+  return `<button class="btn small icon" data-del="${esc(x.code)}" title="削除を依頼" aria-label="削除を依頼">🗑</button>`;
+}
+function ask({title, text, extra='', yes, no, onYes, onNo}){
+  $('#askT').textContent=title; $('#askP').textContent=text; $('#askX').innerHTML=extra;
+  $('#askYes').textContent=yes; $('#askNo').textContent=no; $('#ask').hidden=false;
+  $('#askYes').onclick=()=>{ const v=$('#askX textarea')?$('#askX textarea').value.trim():''; $('#ask').hidden=true; onYes&&onYes(v); };
+  $('#askNo').onclick=()=>{ $('#ask').hidden=true; onNo&&onNo(); };
+}
+async function sendDeletion(kind, code, note){
+  const d={ kind, origCode:code, requesterId:me.requesterId, realName:me.realName, artistName:me.artistName, note:note||'', check:$('#website')?$('#website').value:'' };
+  const body=new URLSearchParams();
+  Object.entries(ENTRY).forEach(([k,e])=>{ const v=d[k]; if(e && v) body.append(e,String(v)); });
+  await fetch(FORM_POST_URL,{method:'POST',mode:'no-cors',body});
+}
+function askUserDelete(code){
+  const x=(me.history||[]).find(h=>h.code===code); if(!x) return;
+  const also = x.kind==='新規' && me.history.some(h=>h.origCode===code) ? 'この曲の修正依頼も一緒に消えます。' : '';
+  ask({ title:'この依頼の削除を頼みますか？', text:`「${x.title||'曲名なし'}」（${code}）の削除を masu に頼みます。masu が許可すると依頼が削除され、この端末の履歴からも消えます。${also}`,
+    extra:'<textarea placeholder="理由（任意）"></textarea>', yes:'削除を頼む', no:'やめる',
+    onYes: async note=>{
+      try{ await sendDeletion('削除依頼', code, note); x.delState='waiting'; saveStore(); renderHome(); toast('削除を頼みました'); }
+      catch(e){ toast('送れませんでした。もう一度お試しください'); }
+    }});
+}
+let delSyncAt=0, delAsking=false;
+async function syncDeletion(force){
+  if(!DEL_API_URL || !me || !(me.history||[]).length) return;
+  if(!force && Date.now()-delSyncAt<30000) return;
+  delSyncAt=Date.now();
+  const who=me;
+  let items={};
+  try{
+    const q=new URLSearchParams({ rid:who.requesterId, codes:who.history.map(h=>h.code).join(',') });
+    const r=await fetch(DEL_API_URL+'?'+q.toString()); items=((await r.json())||{}).items||{};
+  }catch(e){ return; }
+  if(me!==who) return;
+  let changed=false; const removed=[]; const asks=[];
+  who.history=who.history.filter(h=>{
+    const st=items[h.code];
+    if(st==='deleted'){ removed.push(h); changed=true; return false; }
+    if(st==='waiting' && h.delState!=='waiting'){ h.delState='waiting'; changed=true; }
+    if(st==='rejected' && h.delState!=='rejected'){ h.delState='rejected'; changed=true; }
+    if(st==='ask' && h.delState!=='agreed' && !(h.delNoAt && Date.now()-h.delNoAt<10*60000)) asks.push(h);
+    if(!st && h.delState){ delete h.delState; changed=true; }
+    return true;
+  });
+  if(changed){ saveStore(); if(cur==='home') renderHome(); }
+  if(removed.length) toast(removed.length===1?`「${removed[0].title||removed[0].code}」は削除されました`:`${removed.length}件の依頼が削除されました`);
+  if(asks.length && !delAsking) askNext(asks);
+}
+function askNext(list){
+  const h=list.shift(); if(!h){ delAsking=false; return; }
+  delAsking=true;
+  ask({ title:'masu から削除の依頼が届いています', text:`「${h.title||'曲名なし'}」（${h.code}）を削除してもいいですか？ 同意すると依頼が削除され、この端末の履歴からも消えます。`,
+    yes:'削除に同意する', no:'削除しない',
+    onYes: async()=>{ try{ await sendDeletion('削除同意', h.code); h.delState='agreed'; saveStore(); if(cur==='home') renderHome(); toast('同意しました'); }catch(e){ toast('送れませんでした'); } askNext(list); },
+    onNo: async()=>{ try{ await sendDeletion('削除拒否', h.code); h.delNoAt=Date.now(); saveStore(); toast('削除しないと伝えました'); }catch(e){ toast('送れませんでした'); } askNext(list); } });
 }
 
 /* =====================================================================
