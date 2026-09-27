@@ -143,6 +143,20 @@ textarea.in{min-height:92px; resize:vertical}
 .acct{border:none; background:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:12px; font-weight:700; width:72px}
 .acct .av{width:58px; height:58px; font-size:20px; box-shadow:0 4px 0 var(--line)}
 .acct.on .av{outline:3px solid var(--red); outline-offset:2px}
+.authtabs{display:flex; gap:6px; background:#fff; border-radius:99px; padding:5px; width:100%; max-width:400px; box-shadow:0 3px 0 var(--line)}
+.authtabs button{flex:1; border:none; border-radius:99px; background:none; padding:11px 8px; font:inherit; font-weight:800; font-size:15px; color:var(--sub); cursor:pointer}
+.authtabs button.on{background:var(--ink); color:#fff}
+.gbtn{width:100%; display:flex; align-items:center; justify-content:center; gap:10px; border:none; border-radius:14px; background:#fff; color:#1f1f1f; font:inherit; font-weight:800; font-size:16px; padding:14px; cursor:pointer; box-shadow:0 4px 0 var(--line), inset 0 0 0 2px var(--line)}
+.gbtn:active{transform:translateY(3px); box-shadow:0 1px 0 var(--line), inset 0 0 0 2px var(--line)}
+.gbtn[disabled]{opacity:.6; cursor:wait}
+.legacy{margin:12px 0 0}
+.legacy summary{cursor:pointer; text-align:center; font-weight:800; font-size:13px; color:var(--sub); padding:10px; list-style:none}
+.legacy summary::-webkit-details-marker{display:none}
+.legacy summary::after{content:' ▾'}
+.legacy[open] summary::after{content:' ▴'}
+.gwho{display:flex; align-items:center; gap:12px}
+.gwho b{display:block}
+.gwho small{color:var(--sub)}
 .linkbtn{border:none; background:none; color:var(--blue); font-weight:800; cursor:pointer; font-size:14px; padding:6px}
 .avpick{display:flex; align-items:center; gap:14px; margin:0 0 14px}
 .avpick .av{width:72px; height:72px; font-size:26px; cursor:pointer; box-shadow:0 4px 0 var(--line)}
@@ -308,34 +322,42 @@ select.in{appearance:auto}
   <div class="logo" aria-hidden="true"><div class="disc"></div><span class="note n1">♪</span><span class="note n2">♫</span><span class="note n3">♩</span></div>
   <h1>楽曲依頼</h1>
 
+  <div class="authtabs" id="authTabs"><button data-am="login" class="on">ログイン</button><button data-am="register">新規登録</button></div>
+
   <div class="authcard" id="loginBox">
-    <div class="accts" id="accts"></div>
     <div class="card">
-      <div class="field"><label for="liId">ユーザーID</label><input class="in" id="liId" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-      <div class="field"><label for="liPw">パスワード</label><input class="in" id="liPw" type="password" autocomplete="off"></div>
-      <label class="toggle" style="margin:4px 0 12px"><input type="checkbox" id="liRemember" checked><span class="sw"></span>ログインしたままにする</label>
-      <button class="btn main wide" id="loginBtn">ログイン</button>
-      <div style="text-align:center;margin-top:8px"><button class="linkbtn" id="forgotBtn" style="font-size:12px">パスワードを忘れた</button></div>
+      <button class="gbtn" id="gLoginBtn"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span>Google でログイン</span></button>
+      <p class="hint" style="text-align:center;margin:10px 0 0">Google で登録した方はこちら。どの端末からでも同じアカウントで使えます。</p>
     </div>
-    <div style="text-align:center">
-      <button class="linkbtn" id="toRegister">はじめての方：新しく登録</button><br>
-      <button class="linkbtn" data-tut style="color:var(--sub); font-size:12px">使い方を見る</button><br>
-      <button class="linkbtn" id="importBtn" style="color:var(--sub); font-size:12px">別の端末のデータを読み込む</button>
-    </div>
+    <details class="legacy" id="legacyBox">
+      <summary>この端末の ID・パスワードでログイン（以前の方式）</summary>
+      <div class="accts" id="accts"></div>
+      <div class="card">
+        <div class="field"><label for="liId">ユーザーID</label><input class="in" id="liId" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+        <div class="field"><label for="liPw">パスワード</label><input class="in" id="liPw" type="password" autocomplete="off"></div>
+        <label class="toggle" style="margin:4px 0 12px"><input type="checkbox" id="liRemember" checked><span class="sw"></span>ログインしたままにする</label>
+        <button class="btn main wide" id="loginBtn">ログイン</button>
+        <div style="text-align:center;margin-top:8px"><button class="linkbtn" id="forgotBtn" style="font-size:12px">パスワードを忘れた</button><br>
+          <button class="linkbtn" id="importBtn" style="color:var(--sub); font-size:12px">別の端末のデータを読み込む</button></div>
+        <p class="hint">ログインしたあと「Google と連携」すると、次からは Google でログインできます。</p>
+      </div>
+    </details>
+    <div style="text-align:center"><button class="linkbtn" data-tut style="color:var(--sub); font-size:12px">使い方を見る</button></div>
   </div>
 
   <div class="authcard" id="registerBox" hidden>
-    <div class="card">
+    <div class="card" id="rgStep1">
       <h2>アカウントを作る</h2>
-      <div class="field"><label for="rgId">ユーザーID <small style="color:var(--sub);font-weight:500">半角英数字</small></label><input class="in" id="rgId" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
-      <div class="field"><label for="rgPw">パスワード <small style="color:var(--sub);font-weight:500">4文字以上</small></label><input class="in" id="rgPw" type="password" autocomplete="new-password"></div>
-      <p class="hint">ID とパスワードはこの端末の中にだけ保存されます。どこにも送られません。</p>
+      <p class="hint" style="margin:0 0 14px">新しく登録するときは Google アカウントが必要です。パスワードを覚える必要はなく、どの端末からでも同じアカウントで使えます。</p>
+      <button class="gbtn" id="gRegBtn"><svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg><span>Google で登録</span></button>
+      <p class="hint" style="margin:12px 0 0">masu に届くのは、このあと入れるプロフィール（名前・連絡先）と依頼の内容だけです。Google のパスワードが見られることはありません。</p>
     </div>
-    <div class="card" id="rgProfile"></div>
-    <button class="btn main wide" id="registerBtn">登録してはじめる</button>
-    <div style="text-align:center; margin-top:8px"><button class="linkbtn" id="toLogin">すでにこの端末で登録した方：ログイン</button><br>
-      <button class="linkbtn" id="importBtn2" style="color:var(--sub); font-size:12px">別の端末で登録した方：データを読み込む</button><br>
-      <button class="linkbtn" data-tut style="color:var(--sub); font-size:12px">使い方を見る</button></div>
+    <div id="rgStep2" hidden>
+      <div class="card"><div class="gwho" id="rgGoogle"></div></div>
+      <div class="card" id="rgProfile"></div>
+      <button class="btn main wide" id="registerBtn">登録してはじめる</button>
+    </div>
+    <div style="text-align:center; margin-top:8px"><button class="linkbtn" data-tut style="color:var(--sub); font-size:12px">使い方を見る</button></div>
   </div>
 </section>
 
@@ -395,7 +417,7 @@ select.in{appearance:auto}
           <button class="btn small" id="pfExport">データを書き出す</button>
           <button class="btn small danger" id="pfDelete">この端末から削除</button>
         </div>
-        <p class="hint">「データを書き出す」で保存したファイルを、別の端末のログイン画面で読み込むと、同じアカウントで使えます。</p>
+        <p class="hint">Google と連携していれば、別の端末でも「Google でログイン」だけで同じアカウントが使えます。「この端末から削除」は、この端末の記録だけを消します（オンラインの記録は残ります）。</p>
       </div>
     </section>
 
@@ -581,7 +603,7 @@ function avatarHTML(u, size){
 
 /* ---- 保存（この端末のみ） ---- */
 function loadStore(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {accounts:{}, last:null, remember:false}; }catch(e){ return {accounts:{}, last:null, remember:false}; } }
-function saveStore(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){ toast('この端末に保存できませんでした'); } }
+function saveStore(){ if(typeof me!=='undefined' && me) me.updated=Date.now(); try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){ toast('この端末に保存できませんでした'); } if(typeof queueCloudSave==='function') queueCloudSave(); }
 let store = loadStore();
 let me = null;   // ログイン中のアカウント
 
@@ -636,7 +658,7 @@ function profileFormHTML(prefix, u){
   return `
   <div class="avpick"><div id="${prefix}Av">${avatarHTML(u,72)}</div>
     <div><button type="button" class="btn small" data-photo="${prefix}">アー写を選ぶ</button>
-    <p class="hint">この端末の中だけで表示されます</p></div></div>
+    <p class="hint">あなたのアカウントの中でだけ表示されます</p></div></div>
   <div class="row2">
     <div class="field"><label for="${prefix}Real">実名</label><input class="in" id="${prefix}Real" autocomplete="off" value="${esc(u.realName)}"></div>
     <div class="field"><label for="${prefix}Artist">アーティスト名</label><input class="in" id="${prefix}Artist" autocomplete="off" value="${esc(u.artistName)}"></div>
@@ -709,22 +731,156 @@ function showMsg(anchor, text){
 /* =====================================================================
  * ログイン・登録
  * ===================================================================== */
+/* =====================================================================
+ * Google ログイン（Firebase）— ログイン情報は Google が管理。パスワードはどこにも保存しない
+ *   users/{uid} に「プロフィール・依頼者ID・依頼の記録」を置き、どの端末からでも同じアカウントに入れる
+ *   データベースのルールで、本人しか読み書きできない
+ * ===================================================================== */
+const FB_CONFIG = { apiKey:"AIzaSyCvHQ87hMvGGKTFxv7neDrfzEgh3FWCXVg", authDomain:"song-request-1e77f.firebaseapp.com",
+  projectId:"song-request-1e77f", storageBucket:"song-request-1e77f.firebasestorage.app", messagingSenderId:"179586584785", appId:"1:179586584785:web:61b5830051b4f04338b5f0" };
+const FB_VER = '10.12.2';
+let fb = null, pendingGoogle = null;
+async function loadFb(){
+  if(fb) return fb;
+  const base = `https://www.gstatic.com/firebasejs/${FB_VER}/`;
+  const [app, auth, fs] = await Promise.all([import(base+'firebase-app.js'), import(base+'firebase-auth.js'), import(base+'firebase-firestore.js')]);
+  const a = app.initializeApp(FB_CONFIG);
+  fb = { auth:auth.getAuth(a), db:fs.getFirestore(a), A:auth, F:fs };
+  fb.A.onAuthStateChanged(fb.auth, u=>{ if(u && me && me.uid===u.uid) pullCloud(u); });
+  return fb;
+}
+async function googleSignIn(){
+  const f = await loadFb();
+  const prov = new f.A.GoogleAuthProvider(); prov.setCustomParameters({ prompt:'select_account' });
+  const r = await f.A.signInWithPopup(f.auth, prov);
+  return r.user;
+}
+function googleErr(e){
+  const c = (e && e.code) || '';
+  if(c.includes('popup-closed') || c.includes('cancelled-popup')) return 'ログインの画面が閉じられました。もう一度お試しください';
+  if(c.includes('popup-blocked')) return 'ポップアップがブロックされました。ブラウザの設定でこのページのポップアップを許可してください';
+  if(c.includes('unauthorized-domain')) return 'このページのアドレスではログインできません（管理者の設定が必要です）';
+  if(c.includes('network')) return '通信できませんでした。電波の良いところでもう一度お試しください';
+  return 'Google でログインできませんでした（' + (c || (e && e.message) || '不明なエラー') + '）';
+}
+async function fetchCloud(uid){ const f=await loadFb(); const snap=await f.F.getDoc(f.F.doc(f.db,'users',uid)); return snap.exists()?snap.data():null; }
+function cloudPayload(u){
+  return { profile:{ realName:u.realName||'', artistName:u.artistName||'', email:u.email||'', sns:u.sns||'', line:u.line||'', phone:u.phone||'', preferred:u.preferred||'' },
+    photo:(u.photo && u.photo.length<150000)?u.photo:'', requesterId:u.requesterId, gEmail:u.gEmail||'',
+    history:(u.history||[]).map(h=>{ const c=Object.assign({},h); delete c.jacket; return c; }),
+    notes:(u.notes||[]).slice(-20), created:u.created||'', updated:u.updated||Date.now() };
+}
+async function cloudSaveNow(u){
+  const f=await loadFb();
+  if(!f.auth.currentUser || f.auth.currentUser.uid!==u.uid) return false;
+  await f.F.setDoc(f.F.doc(f.db,'users',u.uid), cloudPayload(u));
+  return true;
+}
+let cloudTimer=null;
+function queueCloudSave(){
+  if(!me || !me.uid) return;
+  const u=me; clearTimeout(cloudTimer);
+  cloudTimer=setTimeout(()=>{ cloudSaveNow(u).catch(e=>console.warn('cloud save',e)); }, 900);
+}
+function findKeyByUid(uid){ return Object.keys(store.accounts).find(k=>store.accounts[k].uid===uid)||null; }
+// オンラインの記録と、この端末の記録をまとめる（新しい方のプロフィールを使う・依頼はコードで合わせる）
+function mergeCloud(key, data, g){
+  const local = store.accounts[key] || {};
+  const jk = {}; (local.history||[]).forEach(h=>{ if(h.jacket) jk[h.code]=h.jacket; });
+  const hist = (data.history||[]).map(h=>jk[h.code]?Object.assign({},h,{jacket:jk[h.code]}):h);
+  (local.history||[]).forEach(h=>{ if(!hist.some(x=>x.code===h.code)) hist.push(h); });
+  const cloudNewer = (data.updated||0) >= (local.updated||0);
+  const prof = cloudNewer ? (data.profile||{}) : {};
+  store.accounts[key] = Object.assign({}, local, prof, {
+    loginId: local.loginId || key, uid:g.uid, google:true, gEmail:g.email||data.gEmail||local.gEmail||'',
+    requesterId: data.requesterId || local.requesterId, photo: (cloudNewer && data.photo) ? data.photo : (local.photo||data.photo||''),
+    history: hist, notes: (cloudNewer ? data.notes : local.notes) || [], created: data.created || local.created, updated: Math.max(data.updated||0, local.updated||0) });
+  return store.accounts[key];
+}
+async function pullCloud(g){
+  try{
+    const data = await fetchCloud(g.uid); if(!data || !me || me.uid!==g.uid) return;
+    const key = findKeyByUid(g.uid); if(!key) return;
+    me = mergeCloud(key, data, g);
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){}
+    paintMe(); if(cur==='home') renderHome();
+    if((data.history||[]).length < (me.history||[]).length) queueCloudSave();   // この端末にだけある記録を上げる
+  }catch(e){ console.warn('pull',e); }
+}
+async function googleEnter(g){
+  const data = await fetchCloud(g.uid);
+  if(!data) return false;
+  const key = findKeyByUid(g.uid) || ('g-'+g.uid);
+  mergeCloud(key, data, g);
+  store.last = key; store.remember = true; saveStore();
+  enter(key); return true;
+}
+function showRegStep2(g){
+  pendingGoogle = { uid:g.uid, email:g.email||'', name:g.displayName||'', photo:g.photoURL||'' };
+  $('#rgStep1').hidden=true; $('#rgStep2').hidden=false;
+  $('#rgGoogle').innerHTML = `<div class="av" style="width:44px;height:44px;background:var(--blue)">${esc([...(g.displayName||g.email||'G')][0])}</div><div><b>Google と接続しました</b><small>${esc(g.email||'')}</small></div>`;
+  $('#rgProfile').innerHTML = '<h2>プロフィール</h2>' + profileFormHTML('rg', { realName:g.displayName||'', email:g.email||'' }); wirePref('rg');
+}
+async function withBusy(btn, fn){ btn.disabled=true; try{ await fn(); } finally{ btn.disabled=false; } }
+$('#gLoginBtn').onclick = ()=>withBusy($('#gLoginBtn'), async()=>{
+  ctx();
+  let g; try{ g = await googleSignIn(); }catch(e){ return showMsg($('#gLoginBtn'), googleErr(e)); }
+  try{
+    if(await googleEnter(g)){ sfx.next(); toast('ログインしました'); return; }
+    setAuthMode('register'); showRegStep2(g);
+    showMsg($('#registerBtn'), 'この Google アカウントはまだ登録されていません。プロフィールを入れて登録してください');
+  }catch(e){ showMsg($('#gLoginBtn'), '記録を読み込めませんでした。もう一度お試しください'); }
+});
+$('#gRegBtn').onclick = ()=>withBusy($('#gRegBtn'), async()=>{
+  ctx();
+  let g; try{ g = await googleSignIn(); }catch(e){ return showMsg($('#gRegBtn'), googleErr(e)); }
+  try{
+    if(await googleEnter(g)){ sfx.next(); toast('すでに登録済みだったのでログインしました'); return; }
+    showRegStep2(g); sfx.next();
+  }catch(e){ showMsg($('#gRegBtn'), '記録を読み込めませんでした。もう一度お試しください'); }
+});
+// 以前の方式のアカウントを Google と連携する（依頼者IDと記録はそのまま引き継ぐ）
+async function linkGoogle(){
+  if(!me || me.uid) return;
+  let g; try{ g = await googleSignIn(); }catch(e){ return toast(googleErr(e)); }
+  try{
+    const data = await fetchCloud(g.uid);
+    const other = findKeyByUid(g.uid);
+    if((data && data.requesterId && data.requesterId!==me.requesterId) || (other && other!==me.loginId)){
+      return ask({ title:'この Google アカウントは使えません', text:'この Google アカウントは、すでに別の依頼アカウントで使われています。別の Google アカウントを選んでください。', yes:'OK', no:'閉じる' });
+    }
+    me.uid=g.uid; me.google=true; me.gEmail=g.email||''; saveStore();
+    await cloudSaveNow(me);
+    addNote('Google と連携しました', `次からは「Google でログイン」で、どの端末からでも使えます（${g.email||''}）`, '🔗');
+    toast('Google と連携しました'); renderHome(); if(cur==='profile') renderProfile();
+  }catch(e){ toast('連携できませんでした。もう一度お試しください'); }
+}
+const GLOGO = '<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.4 5.7c4.3-4 6.9-9.9 6.9-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
+function handleOf(u){ return u.google ? (u.gEmail||'Google') : '@'+u.loginId; }
+
 function showAuth(mode){
   stopAll();
   $('#shell').hidden = true; $('#auth').hidden = false;
-  $('#loginBox').hidden = mode==='register'; $('#registerBox').hidden = mode!=='register';
+  setAuthMode(mode==='register'?'register':'login');
+}
+function setAuthMode(mode){
+  $$('#authTabs button').forEach(b=>b.classList.toggle('on', b.dataset.am===mode));
+  $('#loginBox').hidden = mode!=='login'; $('#registerBox').hidden = mode!=='register';
   $$('.msg').forEach(m=>m.remove());
   if(mode==='register'){
-    $('#rgId').value=''; $('#rgPw').value=''; pendingPhoto.rg=null;
-    $('#rgProfile').innerHTML = '<h2>プロフィール</h2>' + profileFormHTML('rg', {}); wirePref('rg');
+    pendingGoogle=null; pendingPhoto.rg=null;
+    $('#rgStep1').hidden=false; $('#rgStep2').hidden=true;
   } else {
-    const ids = Object.keys(store.accounts);
+    const ids = Object.keys(store.accounts).filter(id=>!store.accounts[id].google || store.accounts[id].hash);
     $('#accts').innerHTML = ids.map(id=>{ const u=store.accounts[id];
       return `<button class="acct" data-id="${esc(id)}">${avatarHTML(u,58)}<span>${esc(u.artistName||u.realName||id)}</span></button>`; }).join('');
     $$('.acct').forEach(b=>b.onclick=()=>{ $$('.acct').forEach(x=>x.classList.toggle('on',x===b)); $('#liId').value=b.dataset.id; $('#liPw').value=''; $('#liPw').focus(); sfx.tap(); });
     $('#liId').value=''; $('#liPw').value='';
+    $('#legacyBox').open = false;
   }
 }
+document.addEventListener('click', e=>{ const b=e.target.closest('#authTabs button'); if(b){ sfx.tap(); setAuthMode(b.dataset.am); } });
+
 $('#forgotBtn').onclick=()=>{
   const id=findAccountId($('#liId').value) || (Object.keys(store.accounts).length===1 ? Object.keys(store.accounts)[0] : null);
   if(!id) return showMsg($('#forgotBtn'), '先にユーザーIDを入れるか、上のアイコンからアカウントを選んでください');
@@ -740,8 +896,6 @@ $('#forgotBtn').onclick=()=>{
       $('#liId').value=id; $('#liPw').value=''; toast('パスワードを作り直しました。ログインしてください');
     }});
 };
-$('#toRegister').onclick=()=>{ sfx.next(); showAuth('register'); };
-$('#toLogin').onclick=()=>{ sfx.back(); showAuth('login'); };
 
 $('#loginBtn').onclick = async ()=>{
   ctx();
@@ -758,22 +912,21 @@ $('#liPw').addEventListener('keydown', e=>{ if(e.key==='Enter' && !e.isComposing
 
 $('#registerBtn').onclick = async ()=>{
   ctx();
-  const id=$('#rgId').value.normalize('NFKC').trim(), pw=$('#rgPw').value.normalize('NFKC');
-  if(!/^[A-Za-z0-9_.-]{3,20}$/.test(id)) return showMsg($('#registerBtn'), 'ユーザーIDは半角英数字3〜20文字にしてください');
-  if(findAccountId(id)) return showMsg($('#registerBtn'), 'このユーザーIDはこの端末ですでに使われています。ログイン画面からログインしてください');
-  if(pw.length<4) return showMsg($('#registerBtn'), 'パスワードは4文字以上にしてください');
+  if(!pendingGoogle) return showMsg($('#registerBtn'), '先に「Google で登録」を押してください');
   const p = readProfile('rg'); const err = profileError(p);
   if(err) return showMsg($('#registerBtn'), err);
-  const salt = makeCode()+makeCode();
-  store.accounts[id] = Object.assign({ loginId:id, salt, hash:await hashPw(pw,salt), requesterId:'U-'+makeCode().replace('-','')+makeCode().slice(0,2),
-    photo:pendingPhoto.rg||'', history:[], created:new Date().toISOString() }, p);
-  store.last = id; store.remember = true; saveStore();
-  enter(id); sfx.next(); toast('登録しました');
+  const g=pendingGoogle, key='g-'+g.uid;
+  store.accounts[key] = Object.assign({ loginId:key, uid:g.uid, google:true, gEmail:g.email||'', requesterId:'U-'+makeCode().replace('-','')+makeCode().slice(0,2),
+    photo:pendingPhoto.rg||'', history:[], notes:[], created:new Date().toISOString() }, p);
+  store.last = key; store.remember = true; saveStore();
+  $('#registerBtn').disabled=true;
+  try{ await cloudSaveNow(store.accounts[key]); }catch(e){ toast('オンラインへの保存に失敗しました。あとで自動でやり直します'); }
+  $('#registerBtn').disabled=false; pendingGoogle=null;
+  enter(key); sfx.next(); toast('登録しました');
 };
 
 /* 読み込み（別の端末から） */
 $('#importBtn').onclick=()=>$('#importFile').click();
-$('#importBtn2').onclick=()=>$('#importFile').click();
 $('#importFile').onchange = e=>{
   const f=e.target.files[0]; if(!f) return;
   const r=new FileReader();
@@ -797,7 +950,7 @@ function confirmOverwrite(id){ return window.confirm(`この端末の「${id}」
 const TUT = [
   ['♪','var(--red)','ようこそ！','つくりたい曲のことを、5つのステップで masu に伝えられるページです。ジャンル・テンポ・曲の設計図まで、タップで決めていけます。'],
   ['👤','var(--blue)','最初にプロフィールを登録','名前と連絡先を一度登録すれば、次からは曲の内容だけ書けばOK。連絡先を変えたいときは「プロフィール」から。'],
-  ['📱','var(--c-kan)','登録は「この端末」だけに保存されます','ID・パスワード・依頼の記録はこの端末のブラウザの中にだけ残り、どこにも送られません。そのため、別のスマホやPCで開くと最初からになります。移したいときは「プロフィール → データを書き出す」で保存したファイルを、新しい端末で読み込んでください。'],
+  ['🔑','var(--c-kan)','Google で登録・ログイン','登録は Google アカウントで行います。パスワードを覚える必要はなく、スマホでも PC でも「Google でログイン」を押せば同じアカウントと依頼の記録が出てきます。Google のパスワードが masu に見られることはありません。'],
   ['🔧','var(--c-outro)','送ったあとは','依頼を送ると「依頼コード」が出ます。直してほしいところが出てきたら、あなたの依頼一覧から「修正を依頼」でお願いできます。']
 ];
 let tutI = 0, tutDone = null;
@@ -828,10 +981,11 @@ function enter(id){
   me = store.accounts[id];
   $('#auth').hidden = true; $('#shell').hidden = false; $('#shell').classList.add('logged');
   paintMe(); go('home');
+  if(me.uid) loadFb().then(f=>{ if(f.auth.currentUser && f.auth.currentUser.uid===me.uid) pullCloud(f.auth.currentUser); }).catch(()=>{});
 }
 function paintMe(){
   $('#topAv').innerHTML = avatarHTML(me,40);
-  $('#sideWho').innerHTML = avatarHTML(me,38) + `<div><b>${esc(me.artistName||me.realName)}</b><small>@${esc(me.loginId)}</small></div>`;
+  $('#sideWho').innerHTML = avatarHTML(me,38) + `<div><b>${esc(me.artistName||me.realName)}</b><small>${esc(handleOf(me))}</small></div>`;
 }
 function go(v, dir=1){
   stopAll();
@@ -906,11 +1060,13 @@ function renderNotices(){
   h.filter(x=>x.delState==='waiting').forEach(x=>out.push(`<div class="notice"><div class="ic">⏳</div><div><b>削除の許可を待っています</b><p>「${esc(x.title||'曲名なし')}」（${esc(x.code)}）の削除を masu に頼んでいます。</p></div></div>`));
   h.filter(x=>x.delState==='rejected').forEach(x=>out.push(`<div class="notice"><div class="ic">💬</div><div><b>削除は見送りになりました</b><p>「${esc(x.title||'曲名なし')}」（${esc(x.code)}）。理由は masu から連絡があります。</p></div></div>`));
   (me.notes||[]).slice(-5).reverse().forEach(n=>out.push(`<div class="notice"><div class="ic">${n.ic||'🔔'}</div><div><b>${esc(n.t)}</b><p>${esc(n.p||'')}</p></div></div>`));
+  if(!me.google) out.unshift(`<div class="notice"><div class="ic">🔗</div><div><b>Google と連携しませんか？</b><p>連携すると、スマホ・PC どの端末からでも同じアカウントでログインできます。今までの依頼の記録もそのまま引き継がれます。</p><div class="row"><button class="btn small" data-link>Google と連携する</button></div></div></div>`);
   if(!h.length) out.push(`<div class="notice"><div class="ic">👋</div><div><b>ようこそ</b><p>「＋ 依頼する」から曲の依頼ができます。送った依頼は「依頼一覧」にたまっていきます。</p></div></div>`);
   if(!out.length) out.push(`<div class="notice"><div class="ic">✅</div><div><b>新しいお知らせはありません</b><p>依頼の状況が変わるとここに出ます。</p></div></div>`);
   $('#notices').innerHTML=out.join('');
   const n=h.filter(x=>x.delState==='ask').length;
   $('#homeSeg [data-tab="home"]').innerHTML='ホーム'+(n?`<span class="bdg">${n}</span>`:'');
+  $$('[data-link]').forEach(b=>b.onclick=()=>linkGoogle());
   $$('[data-askyes]').forEach(b=>b.onclick=()=>answerAsk(b.dataset.askyes,true));
   $$('[data-askno]').forEach(b=>b.onclick=()=>answerAsk(b.dataset.askno,false));
 }
@@ -925,7 +1081,7 @@ async function answerAsk(code, yes){
 }
 function renderHome(){
   const h = me.history || [];
-  $('#meCard').innerHTML = avatarHTML(me,48) + `<div><b>${esc(me.artistName||me.realName)}</b><small>@${esc(me.loginId)}</small></div>
+  $('#meCard').innerHTML = avatarHTML(me,48) + `<div><b>${esc(me.artistName||me.realName)}</b><small>${esc(handleOf(me))}</small></div>
     <div class="stat"><b>${h.filter(x=>x.kind==='新規').length}</b>依頼</div><div class="stat"><b>${h.filter(x=>x.kind==='修正').length}</b>修正</div>`;
   renderNotices();
   if(!h.length){ const em=`<div class="empty">まだ依頼はありません。<br>「＋ 依頼する」から最初の依頼をどうぞ。</div>`; $('#feed').innerHTML=em; $('#feedRecent').innerHTML=em; syncDeletion(); return; }
@@ -1031,7 +1187,9 @@ function askNext(list){
 function renderProfile(){
   pendingPhoto.pf = null;
   $('#pfProfile').innerHTML = profileFormHTML('pf', me); wirePref('pf');
-  $('#pfIds').innerHTML = `ユーザーID：<b>${esc(me.loginId)}</b><br>依頼者ID：${esc(me.requesterId)}`;
+  $('#pfIds').innerHTML = (me.google ? `ログイン：<b>Google（${esc(me.gEmail||'')}）</b>` : `ユーザーID：<b>${esc(me.loginId)}</b>（この端末だけ）`) + `<br>依頼者ID：${esc(me.requesterId)}`
+    + (me.google ? '' : `<br><button class="gbtn" id="pfLink" style="margin-top:12px">${GLOGO}<span>Google と連携する</span></button><span class="hint">連携すると、どの端末からでも同じアカウントで使えます。</span>`);
+  if($('#pfLink')) $('#pfLink').onclick=()=>linkGoogle();
 }
 $('#pfSave').onclick=()=>{
   const p=readProfile('pf'), err=profileError(p);
@@ -1039,8 +1197,8 @@ $('#pfSave').onclick=()=>{
   Object.assign(me,p); if(pendingPhoto.pf) me.photo=pendingPhoto.pf;
   saveStore(); paintMe(); sfx.on(); toast('保存しました');
 };
-$('#pfSwitch').onclick=()=>{ sfx.tap(); store.last=null; saveStore(); me=null; showAuth('login'); };
-$('#pfLogout').onclick=()=>{ sfx.back(); store.last=null; store.remember=false; saveStore(); me=null; showAuth('login'); };
+$('#pfSwitch').onclick=async()=>{ sfx.tap(); const g=me&&me.google; store.last=null; saveStore(); me=null; if(g){ try{ const f=await loadFb(); await f.A.signOut(f.auth); }catch(e){} } showAuth('login'); };
+$('#pfLogout').onclick=async()=>{ sfx.back(); const g=me&&me.google; store.last=null; store.remember=false; saveStore(); me=null; if(g){ try{ const f=await loadFb(); await f.A.signOut(f.auth); }catch(e){} } showAuth('login'); };
 $('#pfExport').onclick=()=>{
   const blob=new Blob([JSON.stringify({type:'song-request-account', exported:new Date().toISOString(), account:me},null,1)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`楽曲依頼_${me.loginId}.json`; a.click(); URL.revokeObjectURL(a.href);
@@ -1366,7 +1524,8 @@ async function submit(){
     me.history=me.history||[];
     me.history.push({ code:d.code, kind:d.kind, title:d.title, date:`${t.getFullYear()}/${p(t.getMonth()+1)}/${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`,
       usage:d.usage, genre:d.genre||'', bpm:d.bpm, totalBars:d.totalBars, credits:d.credits, origCode:d.origCode||'', items:d._items||[], jacket:d._jacket||'' });
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){ me.history[me.history.length-1].jacket=''; saveStore(); toast('容量がいっぱいのためジャケ写は保存しませんでした'); }
+    try{ me.updated=Date.now(); localStorage.setItem(STORE_KEY, JSON.stringify(store)); }catch(e){ me.history[me.history.length-1].jacket=''; saveStore(); toast('容量がいっぱいのためジャケ写は保存しませんでした'); }
+    queueCloudSave();
     $('#doneCode').textContent=d.code;
     flow=null; go('done'); sfx.clear(); confetti();
   }catch(ex){ showMsg($('#summary'),'送れませんでした。通信状況を確認して、もう一度お試しください。'); }
